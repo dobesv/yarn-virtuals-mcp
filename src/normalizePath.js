@@ -1,7 +1,6 @@
 import path from "path";
-import os from 'os';
 
-export function normalizePath(p) {
+export default function normalizePath(p) {
     p = p.trim().replace(/^["']|["']$/g, '');
     const isUnixPath = p.startsWith('/') && (
         p.match(/^\/mnt\/[a-z]\//i) ||
@@ -25,11 +24,4 @@ export function normalizePath(p) {
         return normalized.replace(/\//g, '\\');
     }
     return normalized;
-}
-
-export function expandHome(filepath) {
-    if (filepath.startsWith('~/') || filepath === '~') {
-        return path.join(os.homedir(), filepath.slice(1));
-    }
-    return filepath;
 }

@@ -1,80 +1,46 @@
 #!/usr/bin/env node
 
 // Auto-bootstrap Yarn PnP if not already active.
-// This allows `npx yarn-virtuals-mcp .` to work without `yarn node`.
 // Searches upward from cwd to find .pnp.cjs (supports monorepo subdirectories).
-import { existsSync as _existsSync } from "fs";
-import { resolve as _resolve, dirname as _dirname, join as _join } from "path";
+import findYarnRoot from "./findYarnRoot.js";
 import { createRequire as _createRequire } from "module";
+import { join as _join } from "path";
+const yarnRoot = findYarnRoot();
+if (!yarnRoot) {
+    console.error("Error: Could not find .pnp.cjs — are you inside a Yarn PnP project?");
+    process.exit(1);
+}
 if (!process.versions.pnp) {
-    let _dir = _resolve(process.cwd());
-    while (true) {
-        const _candidate = _join(_dir, '.pnp.cjs');
-        if (_existsSync(_candidate)) {
-            const _require = _createRequire(import.meta.url);
-            _require(_candidate).setup();
-            console.error("yarn-virtuals-mcp: Loaded Yarn PnP from " + _candidate);
-            break;
-        }
-        const _parent = _dirname(_dir);
-        if (_parent === _dir) break;
-        _dir = _parent;
-    }
+    const _require = _createRequire(import.meta.url);
+    _require(_join(yarnRoot, '.pnp.cjs')).setup();
+    console.error("yarn-virtuals-mcp: Loaded Yarn PnP from " + _join(yarnRoot, '.pnp.cjs'));
 }
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { RootsListChangedNotificationSchema, } from "@modelcontextprotocol/sdk/types.js";
+import { RootsListChangedNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
 import fs from "fs/promises";
-import { createReadStream, readFileSync, existsSync } from "fs";
 import { createRequire } from "module";
-import { execSync } from "child_process";
 import path from "path";
 import { z } from "zod";
-import { minimatch } from "minimatch";
-import { normalizePath, expandHome } from './path-utils.js';
-import { getValidRootDirectories } from './roots-utils.js';
-import {
-    formatSize, validatePath, getFileStats, readFileContent,
-    searchFilesWithValidation, tailFile, headFile, setAllowedDirectories,
-} from './lib.js';
+import normalizePath from "./normalizePath.js";
+import { setAllowedDirectories } from "./allowedDirectories.js";
+import validatePath from "./validatePath.js";
+import getFileStats from "./getFileStats.js";
+import readFileContent from "./readFileContent.js";
+import readFileLines from "./readFileLines.js";
+import searchFilesWithValidation from "./searchFilesWithValidation.js";
+import tailFile from "./tailFile.js";
+import headFile from "./headFile.js";
+import findWorkspaceDir from "./findWorkspaceDir.js";
+import findPackageRoot from "./findPackageRoot.js";
+import buildTree from "./buildTree.js";
+import updateAllowedDirectoriesFromRoots from "./updateAllowedDirectoriesFromRoots.js";
 
-// Command line argument parsing
-const args = process.argv.slice(2);
-if (args.length === 0) {
-    console.error("Usage: yarn-virtuals-mcp [allowed-directory] [additional-directories...]");
-    console.error("Note: This server must be run via 'yarn node' to access Yarn PnP virtual paths.");
-}
-
-// Store allowed directories in normalized and resolved form
-let allowedDirectories = await Promise.all(args.map(async (dir) => {
-    const expanded = expandHome(dir);
-    const absolute = path.resolve(expanded);
-    try {
-        const resolved = await fs.realpath(absolute);
-        return normalizePath(resolved);
-    }
-    catch (error) {
-        return normalizePath(absolute);
-    }
-}));
-
-// Validate that all directories exist and are accessible
-await Promise.all(allowedDirectories.map(async (dir) => {
-    try {
-        const stats = await fs.stat(dir);
-        if (!stats.isDirectory()) {
-            console.error(`Error: ${dir} is not a directory`);
-            process.exit(1);
-        }
-    }
-    catch (error) {
-        console.error(`Error accessing directory ${dir}:`, error);
-        process.exit(1);
-    }
-}));
-
+// Auto-discover allowed directory from Yarn workspace root
+const allowedDirectories = [normalizePath(yarnRoot)];
 setAllowedDirectories(allowedDirectories);
+console.error("yarn-virtuals-mcp: Allowed directory: " + yarnRoot);
 
 // Server setup
 const server = new McpServer({
@@ -83,45 +49,6 @@ const server = new McpServer({
 });
 
 // --- yarn_resolve_package tool ---
-function findWorkspaceDir(workspaceName) {
-    const out = execSync('yarn workspaces list --json', { encoding: 'utf8', cwd: process.cwd(), timeout: 10000 });
-    for (const line of out.trim().split('\n')) {
-        const ws = JSON.parse(line);
-        if (ws.name === workspaceName) return path.resolve(process.cwd(), ws.location);
-    }
-    const direct = path.resolve(process.cwd(), workspaceName);
-    if (existsSync(direct)) return direct;
-    throw new Error(`Workspace not found: ${workspaceName}`);
-}
-
-function findPackageRoot(entryPoint) {
-    // First, try to find package root from node_modules path structure.
-    // Yarn PnP virtual paths contain node_modules segments like:
-    //   .yarn/__virtual__/.../node_modules/@scope/pkg/dist/index.js
-    const parts = entryPoint.split(path.sep);
-    for (let i = parts.length - 1; i >= 0; i--) {
-        if (parts[i] === 'node_modules' && i + 1 < parts.length) {
-            // Scoped package: node_modules/@scope/pkg
-            if (parts[i + 1].startsWith('@') && i + 2 < parts.length) {
-                return parts.slice(0, i + 3).join(path.sep);
-            }
-            // Regular package: node_modules/pkg
-            return parts.slice(0, i + 2).join(path.sep);
-        }
-    }
-    // Fallback: walk up looking for package.json using the fs module
-    // (use fs import which may be PnP-patched at runtime)
-    let dir = path.dirname(entryPoint);
-    while (dir !== path.dirname(dir)) {
-        try {
-            readFileSync(path.join(dir, 'package.json'));
-            return dir;
-        } catch {}
-        dir = path.dirname(dir);
-    }
-    return path.dirname(entryPoint);
-}
-
 server.registerTool("yarn_resolve_package", {
     title: "Resolve Yarn Package",
     description: "Resolve an npm package name to its filesystem path in the Yarn PnP virtual filesystem. " +
@@ -171,13 +98,34 @@ server.registerTool("yarn_resolve_package", {
 
 // --- Read-only filesystem tools for Yarn PnP virtual paths ---
 
-const readTextFileHandler = async (args) => {
+server.registerTool("yarn_read_file", {
+    title: "Read File (Yarn PnP)",
+    description: "Read a file from a Yarn PnP virtual path (inside .yarn/cache zip archives or __virtual__ directories). " +
+        "Use this for paths returned by yarn_resolve_package. For normal filesystem files, use your built-in file reading tools instead. " +
+        "Supports 'head' and 'tail' parameters to read partial files, or 'startLine'/'endLine' to read a specific line range (1-based, inclusive).",
+    inputSchema: {
+        path: z.string().describe("Absolute path to the file (typically from yarn_resolve_package output)"),
+        tail: z.number().optional().describe("If provided, returns only the last N lines of the file"),
+        head: z.number().optional().describe("If provided, returns only the first N lines of the file"),
+        startLine: z.number().optional().describe("If provided with endLine, returns lines from startLine to endLine (1-based, inclusive)"),
+        endLine: z.number().optional().describe("If provided with startLine, returns lines from startLine to endLine (1-based, inclusive)")
+    },
+    outputSchema: { content: z.string() },
+    annotations: { readOnlyHint: true }
+}, async (args) => {
     const validPath = await validatePath(args.path);
-    if (args.head && args.tail) {
-        throw new Error("Cannot specify both head and tail parameters simultaneously");
+    const modes = [args.head, args.tail, args.startLine || args.endLine].filter(Boolean);
+    if (modes.length > 1) {
+        throw new Error("Cannot combine head, tail, and startLine/endLine parameters");
     }
     let content;
-    if (args.tail) {
+    if (args.startLine != null && args.endLine != null) {
+        content = await readFileLines(validPath, args.startLine, args.endLine);
+    }
+    else if (args.startLine != null || args.endLine != null) {
+        throw new Error("Both startLine and endLine must be provided together");
+    }
+    else if (args.tail) {
         content = await tailFile(validPath, args.tail);
     }
     else if (args.head) {
@@ -190,21 +138,7 @@ const readTextFileHandler = async (args) => {
         content: [{ type: "text", text: content }],
         structuredContent: { content }
     };
-};
-
-server.registerTool("yarn_read_file", {
-    title: "Read File (Yarn PnP)",
-    description: "Read a file from a Yarn PnP virtual path (inside .yarn/cache zip archives or __virtual__ directories). " +
-        "Use this for paths returned by yarn_resolve_package. For normal filesystem files, use your built-in file reading tools instead. " +
-        "Supports 'head' and 'tail' parameters to read partial files.",
-    inputSchema: {
-        path: z.string().describe("Absolute path to the file (typically from yarn_resolve_package output)"),
-        tail: z.number().optional().describe("If provided, returns only the last N lines of the file"),
-        head: z.number().optional().describe("If provided, returns only the first N lines of the file")
-    },
-    outputSchema: { content: z.string() },
-    annotations: { readOnlyHint: true }
-}, readTextFileHandler);
+});
 
 server.registerTool("yarn_read_multiple_files", {
     title: "Read Multiple Files (Yarn PnP)",
@@ -269,36 +203,7 @@ server.registerTool("yarn_directory_tree", {
     outputSchema: { content: z.string() },
     annotations: { readOnlyHint: true }
 }, async (args) => {
-    const rootPath = args.path;
-    async function buildTree(currentPath, excludePatterns = []) {
-        const validPath = await validatePath(currentPath);
-        const entries = await fs.readdir(validPath, { withFileTypes: true });
-        const result = [];
-        for (const entry of entries) {
-            const relativePath = path.relative(rootPath, path.join(currentPath, entry.name));
-            const shouldExclude = excludePatterns.some(pattern => {
-                if (pattern.includes('*')) {
-                    return minimatch(relativePath, pattern, { dot: true });
-                }
-                return minimatch(relativePath, pattern, { dot: true }) ||
-                    minimatch(relativePath, `**/${pattern}`, { dot: true }) ||
-                    minimatch(relativePath, `**/${pattern}/**`, { dot: true });
-            });
-            if (shouldExclude)
-                continue;
-            const entryData = {
-                name: entry.name,
-                type: entry.isDirectory() ? 'directory' : 'file'
-            };
-            if (entry.isDirectory()) {
-                const subPath = path.join(currentPath, entry.name);
-                entryData.children = await buildTree(subPath, excludePatterns);
-            }
-            result.push(entryData);
-        }
-        return result;
-    }
-    const treeData = await buildTree(rootPath, args.excludePatterns);
+    const treeData = await buildTree(args.path, args.path, args.excludePatterns);
     const text = JSON.stringify(treeData, null, 2);
     return {
         content: [{ type: "text", text }],
@@ -348,19 +253,7 @@ server.registerTool("yarn_get_file_info", {
     };
 });
 
-// Updates allowed directories based on MCP client roots
-async function updateAllowedDirectoriesFromRoots(requestedRoots) {
-    const validatedRootDirs = await getValidRootDirectories(requestedRoots);
-    if (validatedRootDirs.length > 0) {
-        allowedDirectories = [...validatedRootDirs];
-        setAllowedDirectories(allowedDirectories);
-        console.error(`Updated allowed directories from MCP roots: ${validatedRootDirs.length} valid directories`);
-    }
-    else {
-        console.error("No valid root directories provided by client");
-    }
-}
-
+// Handle MCP roots notifications
 server.server.setNotificationHandler(RootsListChangedNotificationSchema, async () => {
     try {
         const response = await server.server.listRoots();
@@ -381,34 +274,14 @@ server.server.oninitialized = async () => {
             if (response && 'roots' in response) {
                 await updateAllowedDirectoriesFromRoots(response.roots);
             }
-            else {
-                console.error("Client returned no roots set, keeping current settings");
-            }
         }
         catch (error) {
             console.error("Failed to request initial roots from client:", error instanceof Error ? error.message : String(error));
         }
     }
-    else {
-        if (allowedDirectories.length > 0) {
-            console.error("Client does not support MCP Roots, using allowed directories set from server args:", allowedDirectories);
-        }
-        else {
-            throw new Error(`Server cannot operate: No allowed directories available. Please start with directory arguments or use a client that supports MCP roots.`);
-        }
-    }
 };
 
 // Start server
-async function runServer() {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error("yarn-virtuals-mcp server running on stdio");
-    if (allowedDirectories.length === 0) {
-        console.error("Started without allowed directories - waiting for client to provide roots via MCP protocol");
-    }
-}
-runServer().catch((error) => {
-    console.error("Fatal error running server:", error);
-    process.exit(1);
-});
+const transport = new StdioServerTransport();
+await server.connect(transport);
+console.error("yarn-virtuals-mcp server running on stdio");

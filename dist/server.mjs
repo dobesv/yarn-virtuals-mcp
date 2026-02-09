@@ -86,23 +86,23 @@ var require_code = __commonJS({
     };
     exports._Code = _Code;
     exports.nil = new _Code("");
-    function _(strs, ...args2) {
+    function _(strs, ...args) {
       const code = [strs[0]];
       let i = 0;
-      while (i < args2.length) {
-        addCodeArg(code, args2[i]);
+      while (i < args.length) {
+        addCodeArg(code, args[i]);
         code.push(strs[++i]);
       }
       return new _Code(code);
     }
     exports._ = _;
     var plus = new _Code("+");
-    function str(strs, ...args2) {
+    function str(strs, ...args) {
       const expr = [safeStringify(strs[0])];
       let i = 0;
-      while (i < args2.length) {
+      while (i < args.length) {
         expr.push(plus);
-        addCodeArg(expr, args2[i]);
+        addCodeArg(expr, args[i]);
         expr.push(plus, safeStringify(strs[++i]));
       }
       optimize(expr);
@@ -657,10 +657,10 @@ var require_codegen = __commonJS({
       }
     };
     var Func = class extends BlockNode {
-      constructor(name, args2, async) {
+      constructor(name, args, async) {
         super();
         this.name = name;
-        this.args = args2;
+        this.args = args;
         this.async = async;
       }
       render(opts) {
@@ -935,8 +935,8 @@ var require_codegen = __commonJS({
         return this;
       }
       // `function` heading (or definition if funcBody is passed)
-      func(name, args2 = code_1.nil, async, funcBody) {
-        this._blockNode(new Func(name, args2, async));
+      func(name, args = code_1.nil, async, funcBody) {
+        this._blockNode(new Func(name, args, async));
         if (funcBody)
           this.code(funcBody).endFunc();
         return this;
@@ -1030,13 +1030,13 @@ var require_codegen = __commonJS({
     }
     exports.not = not;
     var andCode = mappend(exports.operators.AND);
-    function and(...args2) {
-      return args2.reduce(andCode);
+    function and(...args) {
+      return args.reduce(andCode);
     }
     exports.and = and;
     var orCode = mappend(exports.operators.OR);
-    function or(...args2) {
-      return args2.reduce(orCode);
+    function or(...args) {
+      return args.reduce(orCode);
     }
     exports.or = or;
     function mappend(op) {
@@ -1769,8 +1769,8 @@ var require_code2 = __commonJS({
       ];
       if (it.opts.dynamicRef)
         valCxt.push([names_1.default.dynamicAnchors, names_1.default.dynamicAnchors]);
-      const args2 = (0, codegen_1._)`${dataAndSchema}, ${gen.object(...valCxt)}`;
-      return context !== codegen_1.nil ? (0, codegen_1._)`${func}.call(${context}, ${args2})` : (0, codegen_1._)`${func}(${args2})`;
+      const args = (0, codegen_1._)`${dataAndSchema}, ${gen.object(...valCxt)}`;
+      return context !== codegen_1.nil ? (0, codegen_1._)`${func}.call(${context}, ${args})` : (0, codegen_1._)`${func}(${args})`;
     }
     exports.callValidateCode = callValidateCode;
     var newRegExp = (0, codegen_1._)`new RegExp`;
@@ -2274,8 +2274,8 @@ var require_resolve = __commonJS({
         addAnchor.call(this, sch.$dynamicAnchor);
         baseIds[jsonPtr] = innerBaseId;
         function addRef(ref) {
-          const _resolve2 = this.opts.uriResolver.resolve;
-          ref = normalizeId(innerBaseId ? _resolve2(innerBaseId, ref) : ref);
+          const _resolve = this.opts.uriResolver.resolve;
+          ref = normalizeId(innerBaseId ? _resolve(innerBaseId, ref) : ref);
           if (schemaRefs.has(ref))
             throw ambiguos(ref);
           schemaRefs.add(ref);
@@ -2980,7 +2980,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve.call(this, root, ref);
+      let _sch = resolve2.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3007,7 +3007,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve(root, ref) {
+    function resolve2(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3222,8 +3222,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path7) {
-      let input = path7;
+    function removeDotSegments(path12) {
+      let input = path12;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3422,8 +3422,8 @@ var require_schemes = __commonJS({
         wsComponent.secure = void 0;
       }
       if (wsComponent.resourceName) {
-        const [path7, query] = wsComponent.resourceName.split("?");
-        wsComponent.path = path7 && path7 !== "/" ? path7 : void 0;
+        const [path12, query] = wsComponent.resourceName.split("?");
+        wsComponent.path = path12 && path12 !== "/" ? path12 : void 0;
         wsComponent.query = query;
         wsComponent.resourceName = void 0;
       }
@@ -3582,7 +3582,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve(baseURI, relativeURI, options) {
+    function resolve2(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
@@ -3809,7 +3809,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve,
+      resolve: resolve2,
       resolveComponent,
       equal,
       serialize,
@@ -6776,12 +6776,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs4, exportName) {
+    function addFormats(ajv, list, fs12, exportName) {
       var _a;
       var _b;
       (_a = (_b = ajv.opts.code).formats) !== null && _a !== void 0 ? _a : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list)
-        ajv.addFormat(f, fs4[f]);
+        ajv.addFormat(f, fs12[f]);
     }
     module.exports = exports = formatsPlugin;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -6789,10 +6789,24 @@ var require_dist = __commonJS({
   }
 });
 
+// src/findYarnRoot.js
+import { existsSync } from "fs";
+import { resolve, dirname, join } from "path";
+function findYarnRoot(startDir = process.cwd()) {
+  let dir = resolve(startDir);
+  while (true) {
+    if (existsSync(join(dir, ".pnp.cjs"))) {
+      return dir;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
 // src/index.js
-import { existsSync as _existsSync } from "fs";
-import { resolve as _resolve, dirname as _dirname, join as _join } from "path";
 import { createRequire as _createRequire } from "module";
+import { join as _join } from "path";
 
 // node_modules/zod/v3/external.js
 var external_exports = {};
@@ -7272,8 +7286,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path7, errorMaps, issueData } = params;
-  const fullPath = [...path7, ...issueData.path || []];
+  const { data, path: path12, errorMaps, issueData } = params;
+  const fullPath = [...path12, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -7389,11 +7403,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path7, key) {
+  constructor(parent, value, path12, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path7;
+    this._path = path12;
     this._key = key;
   }
   get path() {
@@ -7750,24 +7764,24 @@ var base64Regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=)
 var base64urlRegex = /^([0-9a-zA-Z-_]{4})*(([0-9a-zA-Z-_]{2}(==)?)|([0-9a-zA-Z-_]{3}(=)?))?$/;
 var dateRegexSource = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))`;
 var dateRegex = new RegExp(`^${dateRegexSource}$`);
-function timeRegexSource(args2) {
+function timeRegexSource(args) {
   let secondsRegexSource = `[0-5]\\d`;
-  if (args2.precision) {
-    secondsRegexSource = `${secondsRegexSource}\\.\\d{${args2.precision}}`;
-  } else if (args2.precision == null) {
+  if (args.precision) {
+    secondsRegexSource = `${secondsRegexSource}\\.\\d{${args.precision}}`;
+  } else if (args.precision == null) {
     secondsRegexSource = `${secondsRegexSource}(\\.\\d+)?`;
   }
-  const secondsQuantifier = args2.precision ? "+" : "?";
+  const secondsQuantifier = args.precision ? "+" : "?";
   return `([01]\\d|2[0-3]):[0-5]\\d(:${secondsRegexSource})${secondsQuantifier}`;
 }
-function timeRegex(args2) {
-  return new RegExp(`^${timeRegexSource(args2)}$`);
+function timeRegex(args) {
+  return new RegExp(`^${timeRegexSource(args)}$`);
 }
-function datetimeRegex(args2) {
-  let regex = `${dateRegexSource}T${timeRegexSource(args2)}`;
+function datetimeRegex(args) {
+  let regex = `${dateRegexSource}T${timeRegexSource(args)}`;
   const opts = [];
-  opts.push(args2.local ? `Z?` : `Z`);
-  if (args2.offset)
+  opts.push(args.local ? `Z?` : `Z`);
+  if (args.offset)
     opts.push(`([+-]\\d{2}:?\\d{2})`);
   regex = `${regex}(${opts.join("|")})`;
   return new RegExp(`^${regex}$`);
@@ -10075,9 +10089,9 @@ var ZodFunction = class _ZodFunction extends ZodType {
       });
       return INVALID;
     }
-    function makeArgsIssue(args2, error2) {
+    function makeArgsIssue(args, error2) {
       return makeIssue({
-        data: args2,
+        data: args,
         path: ctx.path,
         errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, getErrorMap(), en_default].filter((x) => !!x),
         issueData: {
@@ -10101,10 +10115,10 @@ var ZodFunction = class _ZodFunction extends ZodType {
     const fn = ctx.data;
     if (this._def.returns instanceof ZodPromise) {
       const me = this;
-      return OK(async function(...args2) {
+      return OK(async function(...args) {
         const error2 = new ZodError([]);
-        const parsedArgs = await me._def.args.parseAsync(args2, params).catch((e) => {
-          error2.addIssue(makeArgsIssue(args2, e));
+        const parsedArgs = await me._def.args.parseAsync(args, params).catch((e) => {
+          error2.addIssue(makeArgsIssue(args, e));
           throw error2;
         });
         const result = await Reflect.apply(fn, this, parsedArgs);
@@ -10116,10 +10130,10 @@ var ZodFunction = class _ZodFunction extends ZodType {
       });
     } else {
       const me = this;
-      return OK(function(...args2) {
-        const parsedArgs = me._def.args.safeParse(args2, params);
+      return OK(function(...args) {
+        const parsedArgs = me._def.args.safeParse(args, params);
         if (!parsedArgs.success) {
-          throw new ZodError([makeArgsIssue(args2, parsedArgs.error)]);
+          throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
         }
         const result = Reflect.apply(fn, this, parsedArgs.data);
         const parsedReturns = me._def.returns.safeParse(result, params);
@@ -10156,9 +10170,9 @@ var ZodFunction = class _ZodFunction extends ZodType {
     const validatedFunc = this.parse(func);
     return validatedFunc;
   }
-  static create(args2, returns, params) {
+  static create(args, returns, params) {
     return new _ZodFunction({
-      args: args2 ? args2 : ZodTuple.create([]).rest(ZodUnknown.create()),
+      args: args ? args : ZodTuple.create([]).rest(ZodUnknown.create()),
       returns: returns || ZodUnknown.create(),
       typeName: ZodFirstPartyTypeKind.ZodFunction,
       ...processCreateParams(params)
@@ -11030,10 +11044,10 @@ function assignProp(target, prop, value) {
     configurable: true
   });
 }
-function getElementAtPath(obj, path7) {
-  if (!path7)
+function getElementAtPath(obj, path12) {
+  if (!path12)
     return obj;
-  return path7.reduce((acc, key) => acc?.[key], obj);
+  return path12.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -11353,11 +11367,11 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path7, issues) {
+function prefixIssues(path12, issues) {
   return issues.map((iss) => {
     var _a;
     (_a = iss).path ?? (_a.path = []);
-    iss.path.unshift(path7);
+    iss.path.unshift(path12);
     return iss;
   });
 }
@@ -11393,8 +11407,8 @@ function getLengthableOrigin(input) {
     return "string";
   return "unknown";
 }
-function issue(...args2) {
-  const [iss, input, inst] = args2;
+function issue(...args) {
+  const [iss, input, inst] = args;
   if (typeof iss === "string") {
     return {
       message: iss,
@@ -11571,20 +11585,20 @@ var hostname = /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
 var e164 = /^\+(?:[0-9]){6,14}[0-9]$/;
 var dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
 var date = /* @__PURE__ */ new RegExp(`^${dateSource}$`);
-function timeSource(args2) {
+function timeSource(args) {
   const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
-  const regex = typeof args2.precision === "number" ? args2.precision === -1 ? `${hhmm}` : args2.precision === 0 ? `${hhmm}:[0-5]\\d` : `${hhmm}:[0-5]\\d\\.\\d{${args2.precision}}` : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
+  const regex = typeof args.precision === "number" ? args.precision === -1 ? `${hhmm}` : args.precision === 0 ? `${hhmm}:[0-5]\\d` : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}` : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
   return regex;
 }
-function time(args2) {
-  return new RegExp(`^${timeSource(args2)}$`);
+function time(args) {
+  return new RegExp(`^${timeSource(args)}$`);
 }
-function datetime(args2) {
-  const time3 = timeSource({ precision: args2.precision });
+function datetime(args) {
+  const time3 = timeSource({ precision: args.precision });
   const opts = ["Z"];
-  if (args2.local)
+  if (args.local)
     opts.push("");
-  if (args2.offset)
+  if (args.offset)
     opts.push(`([+-]\\d{2}:\\d{2})`);
   const timeRegex2 = `${time3}(?:${opts.join("|")})`;
   return new RegExp(`^${dateSource}T(?:${timeRegex2})$`);
@@ -11987,11 +12001,11 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
 
 // node_modules/zod/v4/core/doc.js
 var Doc = class {
-  constructor(args2 = []) {
+  constructor(args = []) {
     this.content = [];
     this.indent = 0;
     if (this)
-      this.args = args2;
+      this.args = args;
   }
   indented(fn) {
     this.indent += 1;
@@ -12014,10 +12028,10 @@ var Doc = class {
   }
   compile() {
     const F = Function;
-    const args2 = this?.args;
+    const args = this?.args;
     const content = this?.content ?? [``];
     const lines = [...content.map((x) => `  ${x}`)];
-    return new F(...args2, lines.join("\n"));
+    return new F(...args, lines.join("\n"));
   }
 };
 
@@ -14964,12 +14978,12 @@ var ZodType2 = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
     },
     configurable: true
   });
-  inst.meta = (...args2) => {
-    if (args2.length === 0) {
+  inst.meta = (...args) => {
+    if (args.length === 0) {
       return globalRegistry.get(inst);
     }
     const cl = inst.clone();
-    globalRegistry.add(cl, args2[0]);
+    globalRegistry.add(cl, args[0]);
     return cl;
   };
   inst.isOptional = () => inst.safeParse(void 0).success;
@@ -14983,18 +14997,18 @@ var _ZodString = /* @__PURE__ */ $constructor("_ZodString", (inst, def) => {
   inst.format = bag.format ?? null;
   inst.minLength = bag.minimum ?? null;
   inst.maxLength = bag.maximum ?? null;
-  inst.regex = (...args2) => inst.check(_regex(...args2));
-  inst.includes = (...args2) => inst.check(_includes(...args2));
-  inst.startsWith = (...args2) => inst.check(_startsWith(...args2));
-  inst.endsWith = (...args2) => inst.check(_endsWith(...args2));
-  inst.min = (...args2) => inst.check(_minLength(...args2));
-  inst.max = (...args2) => inst.check(_maxLength(...args2));
-  inst.length = (...args2) => inst.check(_length(...args2));
-  inst.nonempty = (...args2) => inst.check(_minLength(1, ...args2));
+  inst.regex = (...args) => inst.check(_regex(...args));
+  inst.includes = (...args) => inst.check(_includes(...args));
+  inst.startsWith = (...args) => inst.check(_startsWith(...args));
+  inst.endsWith = (...args) => inst.check(_endsWith(...args));
+  inst.min = (...args) => inst.check(_minLength(...args));
+  inst.max = (...args) => inst.check(_maxLength(...args));
+  inst.length = (...args) => inst.check(_length(...args));
+  inst.nonempty = (...args) => inst.check(_minLength(1, ...args));
   inst.lowercase = (params) => inst.check(_lowercase(params));
   inst.uppercase = (params) => inst.check(_uppercase(params));
   inst.trim = () => inst.check(_trim());
-  inst.normalize = (...args2) => inst.check(_normalize(...args2));
+  inst.normalize = (...args) => inst.check(_normalize(...args));
   inst.toLowerCase = () => inst.check(_toLowerCase());
   inst.toUpperCase = () => inst.check(_toUpperCase());
 });
@@ -15204,8 +15218,8 @@ var ZodObject2 = /* @__PURE__ */ $constructor("ZodObject", (inst, def) => {
   inst.merge = (other) => util_exports.merge(inst, other);
   inst.pick = (mask) => util_exports.pick(inst, mask);
   inst.omit = (mask) => util_exports.omit(inst, mask);
-  inst.partial = (...args2) => util_exports.partial(ZodOptional2, inst, args2[0]);
-  inst.required = (...args2) => util_exports.required(ZodNonOptional, inst, args2[0]);
+  inst.partial = (...args) => util_exports.partial(ZodOptional2, inst, args[0]);
+  inst.required = (...args) => util_exports.required(ZodNonOptional, inst, args[0]);
 });
 function object2(shape, params) {
   const def = {
@@ -18548,11 +18562,11 @@ var Protocol = class {
    *
    * The Protocol object assumes ownership of the Transport, replacing any callbacks that have already been set, and expects that it is the only user of the Transport instance going forward.
    */
-  async connect(transport) {
+  async connect(transport2) {
     if (this._transport) {
       throw new Error("Already connected to a transport. Call close() before connecting to a new transport, or use a separate Protocol instance per connection.");
     }
-    this._transport = transport;
+    this._transport = transport2;
     const _onclose = this.transport?.onclose;
     this._transport.onclose = () => {
       _onclose?.();
@@ -18866,7 +18880,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -18883,7 +18897,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve2, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -18961,7 +18975,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve(parseResult.data);
+            resolve2(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -19222,12 +19236,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve2, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve, interval);
+      const timeoutId = setTimeout(resolve2, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -19995,8 +20009,8 @@ var McpServer = class {
    *
    * The `server` object assumes ownership of the Transport, replacing any callbacks that have already been set, and expects that it is the only user of the Transport instance going forward.
    */
-  async connect(transport) {
-    return await this.server.connect(transport);
+  async connect(transport2) {
+    return await this.server.connect(transport2);
   }
   /**
    * Closes the connection.
@@ -20065,8 +20079,8 @@ var McpServer = class {
         if (taskSupport === "optional" && !isTaskRequest && isTaskHandler) {
           return await this.handleAutomaticTaskPolling(tool, request, extra);
         }
-        const args2 = await this.validateToolInput(tool, request.params.arguments, request.params.name);
-        const result = await this.executeToolHandler(tool, args2, extra);
+        const args = await this.validateToolInput(tool, request.params.arguments, request.params.name);
+        const result = await this.executeToolHandler(tool, args, extra);
         if (isTaskRequest) {
           return result;
         }
@@ -20103,13 +20117,13 @@ var McpServer = class {
   /**
    * Validates tool input arguments against the tool's input schema.
    */
-  async validateToolInput(tool, args2, toolName) {
+  async validateToolInput(tool, args, toolName) {
     if (!tool.inputSchema) {
       return void 0;
     }
     const inputObj = normalizeObjectSchema(tool.inputSchema);
     const schemaToParse = inputObj ?? tool.inputSchema;
-    const parseResult = await safeParseAsync2(schemaToParse, args2);
+    const parseResult = await safeParseAsync2(schemaToParse, args);
     if (!parseResult.success) {
       const error2 = "error" in parseResult ? parseResult.error : "Unknown error";
       const errorMessage = getParseErrorMessage(error2);
@@ -20144,7 +20158,7 @@ var McpServer = class {
   /**
    * Executes a tool handler (either regular or task-based).
    */
-  async executeToolHandler(tool, args2, extra) {
+  async executeToolHandler(tool, args, extra) {
     const handler = tool.handler;
     const isTaskHandler = "createTask" in handler;
     if (isTaskHandler) {
@@ -20154,7 +20168,7 @@ var McpServer = class {
       const taskExtra = { ...extra, taskStore: extra.taskStore };
       if (tool.inputSchema) {
         const typedHandler = handler;
-        return await Promise.resolve(typedHandler.createTask(args2, taskExtra));
+        return await Promise.resolve(typedHandler.createTask(args, taskExtra));
       } else {
         const typedHandler = handler;
         return await Promise.resolve(typedHandler.createTask(taskExtra));
@@ -20162,7 +20176,7 @@ var McpServer = class {
     }
     if (tool.inputSchema) {
       const typedHandler = handler;
-      return await Promise.resolve(typedHandler(args2, extra));
+      return await Promise.resolve(typedHandler(args, extra));
     } else {
       const typedHandler = handler;
       return await Promise.resolve(typedHandler(extra));
@@ -20175,10 +20189,10 @@ var McpServer = class {
     if (!extra.taskStore) {
       throw new Error("No task store provided for task-capable tool.");
     }
-    const args2 = await this.validateToolInput(tool, request.params.arguments, request.params.name);
+    const args = await this.validateToolInput(tool, request.params.arguments, request.params.name);
     const handler = tool.handler;
     const taskExtra = { ...extra, taskStore: extra.taskStore };
-    const createTaskResult = args2 ? await Promise.resolve(handler.createTask(args2, taskExtra)) : (
+    const createTaskResult = args ? await Promise.resolve(handler.createTask(args, taskExtra)) : (
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await Promise.resolve(handler.createTask(taskExtra))
     );
@@ -20186,7 +20200,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -20353,9 +20367,9 @@ var McpServer = class {
           const errorMessage = getParseErrorMessage(error2);
           throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage}`);
         }
-        const args2 = parseResult.data;
+        const args = parseResult.data;
         const cb = prompt.callback;
-        return await Promise.resolve(cb(args2, extra));
+        return await Promise.resolve(cb(args, extra));
       } else {
         const cb = prompt.callback;
         return await Promise.resolve(cb(extra));
@@ -20829,22 +20843,182 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve) => {
+    return new Promise((resolve2) => {
       const json = serializeMessage(message);
       if (this._stdout.write(json)) {
-        resolve();
+        resolve2();
       } else {
-        this._stdout.once("drain", resolve);
+        this._stdout.once("drain", resolve2);
       }
     });
   }
 };
 
 // src/index.js
-import fs3 from "fs/promises";
-import { createReadStream, readFileSync, existsSync } from "fs";
+import fs11 from "fs/promises";
 import { createRequire } from "module";
-import { execSync } from "child_process";
+import path11 from "path";
+
+// src/normalizePath.js
+import path from "path";
+function normalizePath(p) {
+  p = p.trim().replace(/^["']|["']$/g, "");
+  const isUnixPath = p.startsWith("/") && (p.match(/^\/mnt\/[a-z]\//i) || process.platform !== "win32" || process.platform === "win32" && !p.match(/^\/[a-zA-Z]\//));
+  if (isUnixPath) {
+    return p.replace(/\/+/g, "/").replace(/(?<!^)\/$/, "");
+  }
+  if (p.match(/^[a-zA-Z]:/)) {
+    p = p.replace(/\//g, "\\");
+  }
+  let normalized = path.normalize(p);
+  if (normalized.match(/^[a-zA-Z]:/)) {
+    let result = normalized.replace(/\//g, "\\");
+    if (/^[a-z]:/.test(result)) {
+      result = result.charAt(0).toUpperCase() + result.slice(1);
+    }
+    return result;
+  }
+  if (process.platform === "win32") {
+    return normalized.replace(/\//g, "\\");
+  }
+  return normalized;
+}
+
+// src/allowedDirectories.js
+var allowedDirectories = [];
+function setAllowedDirectories(directories) {
+  allowedDirectories = [...directories];
+}
+function getAllowedDirectories() {
+  return [...allowedDirectories];
+}
+
+// src/validatePath.js
+import fs from "fs/promises";
+import path4 from "path";
+
+// src/expandHome.js
+import path2 from "path";
+import os from "os";
+function expandHome(filepath) {
+  if (filepath.startsWith("~/") || filepath === "~") {
+    return path2.join(os.homedir(), filepath.slice(1));
+  }
+  return filepath;
+}
+
+// src/isPathWithinAllowedDirectories.js
+import path3 from "path";
+function isPathWithinAllowedDirectories(absolutePath, allowedDirectories3) {
+  if (typeof absolutePath !== "string" || !Array.isArray(allowedDirectories3)) {
+    return false;
+  }
+  if (!absolutePath || allowedDirectories3.length === 0) {
+    return false;
+  }
+  if (absolutePath.includes("\0")) {
+    return false;
+  }
+  let normalizedPath;
+  try {
+    normalizedPath = path3.resolve(path3.normalize(absolutePath));
+  } catch {
+    return false;
+  }
+  if (!path3.isAbsolute(normalizedPath)) {
+    throw new Error("Path must be absolute after normalization");
+  }
+  return allowedDirectories3.some((dir) => {
+    if (typeof dir !== "string" || !dir) {
+      return false;
+    }
+    if (dir.includes("\0")) {
+      return false;
+    }
+    let normalizedDir;
+    try {
+      normalizedDir = path3.resolve(path3.normalize(dir));
+    } catch {
+      return false;
+    }
+    if (!path3.isAbsolute(normalizedDir)) {
+      throw new Error("Allowed directories must be absolute paths after normalization");
+    }
+    if (normalizedPath === normalizedDir) {
+      return true;
+    }
+    if (normalizedDir === path3.sep) {
+      return normalizedPath.startsWith(path3.sep);
+    }
+    return normalizedPath.startsWith(normalizedDir + path3.sep);
+  });
+}
+
+// src/validatePath.js
+async function validatePath(requestedPath) {
+  const allowedDirectories3 = getAllowedDirectories();
+  const expandedPath = expandHome(requestedPath);
+  const absolute = path4.isAbsolute(expandedPath) ? path4.resolve(expandedPath) : path4.resolve(process.cwd(), expandedPath);
+  const normalizedRequested = normalizePath(absolute);
+  const isAllowed = isPathWithinAllowedDirectories(normalizedRequested, allowedDirectories3);
+  if (!isAllowed) {
+    throw new Error(`Access denied - path outside allowed directories: ${absolute} not in ${allowedDirectories3.join(", ")}`);
+  }
+  try {
+    const realPath = await fs.realpath(absolute);
+    const normalizedReal = normalizePath(realPath);
+    if (!isPathWithinAllowedDirectories(normalizedReal, allowedDirectories3)) {
+      throw new Error(`Access denied - symlink target outside allowed directories: ${realPath} not in ${allowedDirectories3.join(", ")}`);
+    }
+    return realPath;
+  } catch (error2) {
+    if (error2.code === "ENOENT") {
+      return absolute;
+    }
+    throw error2;
+  }
+}
+
+// src/getFileStats.js
+import fs2 from "fs/promises";
+async function getFileStats(filePath) {
+  const stats = await fs2.stat(filePath);
+  return {
+    size: stats.size,
+    created: stats.birthtime,
+    modified: stats.mtime,
+    accessed: stats.atime,
+    isDirectory: stats.isDirectory(),
+    isFile: stats.isFile(),
+    permissions: stats.mode.toString(8).slice(-3)
+  };
+}
+
+// src/readFileContent.js
+import fs3 from "fs/promises";
+async function readFileContent(filePath, encoding = "utf-8") {
+  return await fs3.readFile(filePath, encoding);
+}
+
+// src/readFileLines.js
+import fs4 from "fs/promises";
+
+// src/normalizeLineEndings.js
+function normalizeLineEndings(text) {
+  return text.replace(/\r\n/g, "\n");
+}
+
+// src/readFileLines.js
+async function readFileLines(filePath, startLine, endLine) {
+  const content = await fs4.readFile(filePath, "utf-8");
+  const lines = normalizeLineEndings(content).split("\n");
+  const start = Math.max(1, startLine) - 1;
+  const end = Math.min(lines.length, endLine);
+  return lines.slice(start, end).join("\n");
+}
+
+// src/searchFilesWithValidation.js
+import fs5 from "fs/promises";
 import path6 from "path";
 
 // node_modules/@isaacs/balanced-match/dist/esm/index.js
@@ -21731,11 +21905,11 @@ var qmarksTestNoExtDot = ([$0]) => {
   return (f) => f.length === len && f !== "." && f !== "..";
 };
 var defaultPlatform = typeof process === "object" && process ? typeof process.env === "object" && process.env && process.env.__MINIMATCH_TESTING_PLATFORM__ || process.platform : "posix";
-var path = {
+var path5 = {
   win32: { sep: "\\" },
   posix: { sep: "/" }
 };
-var sep = defaultPlatform === "win32" ? path.win32.sep : path.posix.sep;
+var sep = defaultPlatform === "win32" ? path5.win32.sep : path5.posix.sep;
 minimatch.sep = sep;
 var GLOBSTAR = /* @__PURE__ */ Symbol("globstar **");
 minimatch.GLOBSTAR = GLOBSTAR;
@@ -21875,7 +22049,7 @@ var Minimatch = class {
     this.parseNegate();
     this.globSet = [...new Set(this.braceExpand())];
     if (options.debug) {
-      this.debug = (...args2) => console.error(...args2);
+      this.debug = (...args) => console.error(...args);
     }
     this.debug(this.pattern, this.globSet);
     const rawGlobParts = this.globSet.map((s) => this.slashSplit(s));
@@ -22401,177 +22575,42 @@ minimatch.Minimatch = Minimatch;
 minimatch.escape = escape2;
 minimatch.unescape = unescape2;
 
-// src/path-utils.js
-import path2 from "path";
-import os from "os";
-function normalizePath(p) {
-  p = p.trim().replace(/^["']|["']$/g, "");
-  const isUnixPath = p.startsWith("/") && (p.match(/^\/mnt\/[a-z]\//i) || process.platform !== "win32" || process.platform === "win32" && !p.match(/^\/[a-zA-Z]\//));
-  if (isUnixPath) {
-    return p.replace(/\/+/g, "/").replace(/(?<!^)\/$/, "");
-  }
-  if (p.match(/^[a-zA-Z]:/)) {
-    p = p.replace(/\//g, "\\");
-  }
-  let normalized = path2.normalize(p);
-  if (normalized.match(/^[a-zA-Z]:/)) {
-    let result = normalized.replace(/\//g, "\\");
-    if (/^[a-z]:/.test(result)) {
-      result = result.charAt(0).toUpperCase() + result.slice(1);
-    }
-    return result;
-  }
-  if (process.platform === "win32") {
-    return normalized.replace(/\//g, "\\");
-  }
-  return normalized;
-}
-function expandHome(filepath) {
-  if (filepath.startsWith("~/") || filepath === "~") {
-    return path2.join(os.homedir(), filepath.slice(1));
-  }
-  return filepath;
-}
-
-// src/roots-utils.js
-import { promises as fs } from "fs";
-import path3 from "path";
-import os2 from "os";
-async function parseRootUri(rootUri) {
-  try {
-    const rawPath = rootUri.startsWith("file://") ? rootUri.slice(7) : rootUri;
-    const expandedPath = rawPath.startsWith("~/") || rawPath === "~" ? path3.join(os2.homedir(), rawPath.slice(1)) : rawPath;
-    const absolutePath = path3.resolve(expandedPath);
-    const resolvedPath = await fs.realpath(absolutePath);
-    return normalizePath(resolvedPath);
-  } catch {
-    return null;
-  }
-}
-async function getValidRootDirectories(requestedRoots) {
-  const validatedDirectories = [];
-  for (const requestedRoot of requestedRoots) {
-    const resolvedPath = await parseRootUri(requestedRoot.uri);
-    if (!resolvedPath) {
-      console.error(`Skipping invalid path or inaccessible: ${requestedRoot.uri}`);
-      continue;
-    }
-    try {
-      const stats = await fs.stat(resolvedPath);
-      if (stats.isDirectory()) {
-        validatedDirectories.push(resolvedPath);
-      } else {
-        console.error(`Skipping non-directory root: ${resolvedPath}`);
+// src/searchFilesWithValidation.js
+async function searchFilesWithValidation(rootPath, pattern, allowedDirectories3, options = {}) {
+  const { excludePatterns = [] } = options;
+  const results = [];
+  async function search(currentPath) {
+    const entries = await fs5.readdir(currentPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path6.join(currentPath, entry.name);
+      try {
+        await validatePath(fullPath);
+        const relativePath = path6.relative(rootPath, fullPath);
+        const shouldExclude = excludePatterns.some((excludePattern) => minimatch(relativePath, excludePattern, { dot: true }));
+        if (shouldExclude) continue;
+        if (minimatch(relativePath, pattern, { dot: true })) {
+          results.push(fullPath);
+        }
+        if (entry.isDirectory()) {
+          await search(fullPath);
+        }
+      } catch {
+        continue;
       }
-    } catch (error2) {
-      console.error(`Skipping invalid directory: ${resolvedPath} due to error: ${error2 instanceof Error ? error2.message : String(error2)}`);
     }
   }
-  return validatedDirectories;
+  await search(rootPath);
+  return results;
 }
 
-// src/lib.js
-import fs2 from "fs/promises";
-import path5 from "path";
-
-// src/path-validation.js
-import path4 from "path";
-function isPathWithinAllowedDirectories(absolutePath, allowedDirectories3) {
-  if (typeof absolutePath !== "string" || !Array.isArray(allowedDirectories3)) {
-    return false;
-  }
-  if (!absolutePath || allowedDirectories3.length === 0) {
-    return false;
-  }
-  if (absolutePath.includes("\0")) {
-    return false;
-  }
-  let normalizedPath;
-  try {
-    normalizedPath = path4.resolve(path4.normalize(absolutePath));
-  } catch {
-    return false;
-  }
-  if (!path4.isAbsolute(normalizedPath)) {
-    throw new Error("Path must be absolute after normalization");
-  }
-  return allowedDirectories3.some((dir) => {
-    if (typeof dir !== "string" || !dir) {
-      return false;
-    }
-    if (dir.includes("\0")) {
-      return false;
-    }
-    let normalizedDir;
-    try {
-      normalizedDir = path4.resolve(path4.normalize(dir));
-    } catch {
-      return false;
-    }
-    if (!path4.isAbsolute(normalizedDir)) {
-      throw new Error("Allowed directories must be absolute paths after normalization");
-    }
-    if (normalizedPath === normalizedDir) {
-      return true;
-    }
-    if (normalizedDir === path4.sep) {
-      return normalizedPath.startsWith(path4.sep);
-    }
-    return normalizedPath.startsWith(normalizedDir + path4.sep);
-  });
-}
-
-// src/lib.js
-var allowedDirectories = [];
-function setAllowedDirectories(directories) {
-  allowedDirectories = [...directories];
-}
-function normalizeLineEndings(text) {
-  return text.replace(/\r\n/g, "\n");
-}
-async function validatePath(requestedPath) {
-  const expandedPath = expandHome(requestedPath);
-  const absolute = path5.isAbsolute(expandedPath) ? path5.resolve(expandedPath) : path5.resolve(process.cwd(), expandedPath);
-  const normalizedRequested = normalizePath(absolute);
-  const isAllowed = isPathWithinAllowedDirectories(normalizedRequested, allowedDirectories);
-  if (!isAllowed) {
-    throw new Error(`Access denied - path outside allowed directories: ${absolute} not in ${allowedDirectories.join(", ")}`);
-  }
-  try {
-    const realPath = await fs2.realpath(absolute);
-    const normalizedReal = normalizePath(realPath);
-    if (!isPathWithinAllowedDirectories(normalizedReal, allowedDirectories)) {
-      throw new Error(`Access denied - symlink target outside allowed directories: ${realPath} not in ${allowedDirectories.join(", ")}`);
-    }
-    return realPath;
-  } catch (error2) {
-    if (error2.code === "ENOENT") {
-      return absolute;
-    }
-    throw error2;
-  }
-}
-async function getFileStats(filePath) {
-  const stats = await fs2.stat(filePath);
-  return {
-    size: stats.size,
-    created: stats.birthtime,
-    modified: stats.mtime,
-    accessed: stats.atime,
-    isDirectory: stats.isDirectory(),
-    isFile: stats.isFile(),
-    permissions: stats.mode.toString(8).slice(-3)
-  };
-}
-async function readFileContent(filePath, encoding = "utf-8") {
-  return await fs2.readFile(filePath, encoding);
-}
+// src/tailFile.js
+import fs6 from "fs/promises";
 async function tailFile(filePath, numLines) {
   const CHUNK_SIZE = 1024;
-  const stats = await fs2.stat(filePath);
+  const stats = await fs6.stat(filePath);
   const fileSize = stats.size;
   if (fileSize === 0) return "";
-  const fileHandle = await fs2.open(filePath, "r");
+  const fileHandle = await fs6.open(filePath, "r");
   try {
     const lines = [];
     let position = fileSize;
@@ -22600,8 +22639,11 @@ async function tailFile(filePath, numLines) {
     await fileHandle.close();
   }
 }
+
+// src/headFile.js
+import fs7 from "fs/promises";
 async function headFile(filePath, numLines) {
-  const fileHandle = await fs2.open(filePath, "r");
+  const fileHandle = await fs7.open(filePath, "r");
   try {
     const lines = [];
     let buffer = "";
@@ -22630,112 +22672,148 @@ async function headFile(filePath, numLines) {
     await fileHandle.close();
   }
 }
-async function searchFilesWithValidation(rootPath, pattern, allowedDirectories3, options = {}) {
-  const { excludePatterns = [] } = options;
-  const results = [];
-  async function search(currentPath) {
-    const entries = await fs2.readdir(currentPath, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path5.join(currentPath, entry.name);
-      try {
-        await validatePath(fullPath);
-        const relativePath = path5.relative(rootPath, fullPath);
-        const shouldExclude = excludePatterns.some((excludePattern) => minimatch(relativePath, excludePattern, { dot: true }));
-        if (shouldExclude) continue;
-        if (minimatch(relativePath, pattern, { dot: true })) {
-          results.push(fullPath);
-        }
-        if (entry.isDirectory()) {
-          await search(fullPath);
-        }
-      } catch {
-        continue;
-      }
-    }
-  }
-  await search(rootPath);
-  return results;
-}
 
-// src/index.js
-if (!process.versions.pnp) {
-  let _dir = _resolve(process.cwd());
-  while (true) {
-    const _candidate = _join(_dir, ".pnp.cjs");
-    if (_existsSync(_candidate)) {
-      const _require = _createRequire(import.meta.url);
-      _require(_candidate).setup();
-      console.error("yarn-virtuals-mcp: Loaded Yarn PnP from " + _candidate);
-      break;
-    }
-    const _parent = _dirname(_dir);
-    if (_parent === _dir) break;
-    _dir = _parent;
-  }
-}
-var args = process.argv.slice(2);
-if (args.length === 0) {
-  console.error("Usage: yarn-virtuals-mcp [allowed-directory] [additional-directories...]");
-  console.error("Note: This server must be run via 'yarn node' to access Yarn PnP virtual paths.");
-}
-var allowedDirectories2 = await Promise.all(args.map(async (dir) => {
-  const expanded = expandHome(dir);
-  const absolute = path6.resolve(expanded);
-  try {
-    const resolved = await fs3.realpath(absolute);
-    return normalizePath(resolved);
-  } catch (error2) {
-    return normalizePath(absolute);
-  }
-}));
-await Promise.all(allowedDirectories2.map(async (dir) => {
-  try {
-    const stats = await fs3.stat(dir);
-    if (!stats.isDirectory()) {
-      console.error(`Error: ${dir} is not a directory`);
-      process.exit(1);
-    }
-  } catch (error2) {
-    console.error(`Error accessing directory ${dir}:`, error2);
-    process.exit(1);
-  }
-}));
-setAllowedDirectories(allowedDirectories2);
-var server = new McpServer({
-  name: "yarn-virtuals-mcp",
-  version: "1.0.0"
-});
+// src/findWorkspaceDir.js
+import path7 from "path";
+import { existsSync as existsSync2 } from "fs";
+import { execSync } from "child_process";
 function findWorkspaceDir(workspaceName) {
   const out = execSync("yarn workspaces list --json", { encoding: "utf8", cwd: process.cwd(), timeout: 1e4 });
   for (const line of out.trim().split("\n")) {
     const ws = JSON.parse(line);
-    if (ws.name === workspaceName) return path6.resolve(process.cwd(), ws.location);
+    if (ws.name === workspaceName) return path7.resolve(process.cwd(), ws.location);
   }
-  const direct = path6.resolve(process.cwd(), workspaceName);
-  if (existsSync(direct)) return direct;
+  const direct = path7.resolve(process.cwd(), workspaceName);
+  if (existsSync2(direct)) return direct;
   throw new Error(`Workspace not found: ${workspaceName}`);
 }
+
+// src/findPackageRoot.js
+import path8 from "path";
+import { readFileSync } from "fs";
 function findPackageRoot(entryPoint) {
-  const parts = entryPoint.split(path6.sep);
+  const parts = entryPoint.split(path8.sep);
   for (let i = parts.length - 1; i >= 0; i--) {
     if (parts[i] === "node_modules" && i + 1 < parts.length) {
       if (parts[i + 1].startsWith("@") && i + 2 < parts.length) {
-        return parts.slice(0, i + 3).join(path6.sep);
+        return parts.slice(0, i + 3).join(path8.sep);
       }
-      return parts.slice(0, i + 2).join(path6.sep);
+      return parts.slice(0, i + 2).join(path8.sep);
     }
   }
-  let dir = path6.dirname(entryPoint);
-  while (dir !== path6.dirname(dir)) {
+  let dir = path8.dirname(entryPoint);
+  while (dir !== path8.dirname(dir)) {
     try {
-      readFileSync(path6.join(dir, "package.json"));
+      readFileSync(path8.join(dir, "package.json"));
       return dir;
     } catch {
     }
-    dir = path6.dirname(dir);
+    dir = path8.dirname(dir);
   }
-  return path6.dirname(entryPoint);
+  return path8.dirname(entryPoint);
 }
+
+// src/buildTree.js
+import fs8 from "fs/promises";
+import path9 from "path";
+async function buildTree(currentPath, rootPath, excludePatterns = []) {
+  const validPath = await validatePath(currentPath);
+  const entries = await fs8.readdir(validPath, { withFileTypes: true });
+  const result = [];
+  for (const entry of entries) {
+    const relativePath = path9.relative(rootPath, path9.join(currentPath, entry.name));
+    const shouldExclude = excludePatterns.some((pattern) => {
+      if (pattern.includes("*")) {
+        return minimatch(relativePath, pattern, { dot: true });
+      }
+      return minimatch(relativePath, pattern, { dot: true }) || minimatch(relativePath, `**/${pattern}`, { dot: true }) || minimatch(relativePath, `**/${pattern}/**`, { dot: true });
+    });
+    if (shouldExclude)
+      continue;
+    const entryData = {
+      name: entry.name,
+      type: entry.isDirectory() ? "directory" : "file"
+    };
+    if (entry.isDirectory()) {
+      const subPath = path9.join(currentPath, entry.name);
+      entryData.children = await buildTree(subPath, rootPath, excludePatterns);
+    }
+    result.push(entryData);
+  }
+  return result;
+}
+
+// src/getValidRootDirectories.js
+import { promises as fs10 } from "fs";
+
+// src/parseRootUri.js
+import { promises as fs9 } from "fs";
+import path10 from "path";
+import os2 from "os";
+async function parseRootUri(rootUri) {
+  try {
+    const rawPath = rootUri.startsWith("file://") ? rootUri.slice(7) : rootUri;
+    const expandedPath = rawPath.startsWith("~/") || rawPath === "~" ? path10.join(os2.homedir(), rawPath.slice(1)) : rawPath;
+    const absolutePath = path10.resolve(expandedPath);
+    const resolvedPath = await fs9.realpath(absolutePath);
+    return normalizePath(resolvedPath);
+  } catch {
+    return null;
+  }
+}
+
+// src/getValidRootDirectories.js
+async function getValidRootDirectories(requestedRoots) {
+  const validatedDirectories = [];
+  for (const requestedRoot of requestedRoots) {
+    const resolvedPath = await parseRootUri(requestedRoot.uri);
+    if (!resolvedPath) {
+      console.error(`Skipping invalid path or inaccessible: ${requestedRoot.uri}`);
+      continue;
+    }
+    try {
+      const stats = await fs10.stat(resolvedPath);
+      if (stats.isDirectory()) {
+        validatedDirectories.push(resolvedPath);
+      } else {
+        console.error(`Skipping non-directory root: ${resolvedPath}`);
+      }
+    } catch (error2) {
+      console.error(`Skipping invalid directory: ${resolvedPath} due to error: ${error2 instanceof Error ? error2.message : String(error2)}`);
+    }
+  }
+  return validatedDirectories;
+}
+
+// src/updateAllowedDirectoriesFromRoots.js
+async function updateAllowedDirectoriesFromRoots(requestedRoots) {
+  const validatedRootDirs = await getValidRootDirectories(requestedRoots);
+  if (validatedRootDirs.length > 0) {
+    setAllowedDirectories(validatedRootDirs);
+    console.error(`Updated allowed directories from MCP roots: ${validatedRootDirs.length} valid directories`);
+  } else {
+    console.error("No valid root directories provided by client");
+  }
+}
+
+// src/index.js
+var yarnRoot = findYarnRoot();
+if (!yarnRoot) {
+  console.error("Error: Could not find .pnp.cjs \u2014 are you inside a Yarn PnP project?");
+  process.exit(1);
+}
+if (!process.versions.pnp) {
+  const _require = _createRequire(import.meta.url);
+  _require(_join(yarnRoot, ".pnp.cjs")).setup();
+  console.error("yarn-virtuals-mcp: Loaded Yarn PnP from " + _join(yarnRoot, ".pnp.cjs"));
+}
+var allowedDirectories2 = [normalizePath(yarnRoot)];
+setAllowedDirectories(allowedDirectories2);
+console.error("yarn-virtuals-mcp: Allowed directory: " + yarnRoot);
+var server = new McpServer({
+  name: "yarn-virtuals-mcp",
+  version: "1.0.0"
+});
 server.registerTool("yarn_resolve_package", {
   title: "Resolve Yarn Package",
   description: "Resolve an npm package name to its filesystem path in the Yarn PnP virtual filesystem. Returns the entry point, package root directory, name, version, and description. Use the returned packageRoot with the other yarn_* tools to browse the package source code.",
@@ -22751,29 +22829,29 @@ server.registerTool("yarn_resolve_package", {
     description: external_exports.string()
   },
   annotations: { readOnlyHint: true }
-}, async (args2) => {
-  const from = args2.workspace ? findWorkspaceDir(args2.workspace) : process.cwd();
-  const req = createRequire(path6.join(from, "package.json"));
+}, async (args) => {
+  const from = args.workspace ? findWorkspaceDir(args.workspace) : process.cwd();
+  const req = createRequire(path11.join(from, "package.json"));
   let entry;
   try {
-    entry = req.resolve(args2.package);
+    entry = req.resolve(args.package);
   } catch {
     try {
-      entry = path6.dirname(req.resolve(args2.package + "/package.json"));
+      entry = path11.dirname(req.resolve(args.package + "/package.json"));
     } catch (e) {
-      throw new Error(`Cannot resolve "${args2.package}" from "${from}": ${e.message}`);
+      throw new Error(`Cannot resolve "${args.package}" from "${from}": ${e.message}`);
     }
   }
   const root = findPackageRoot(entry);
   let info = {};
   try {
-    info = JSON.parse(await fs3.readFile(path6.join(root, "package.json"), "utf8"));
+    info = JSON.parse(await fs11.readFile(path11.join(root, "package.json"), "utf8"));
   } catch {
   }
   const result = {
     entryPoint: entry,
     packageRoot: root,
-    name: info.name || args2.package,
+    name: info.name || args.package,
     version: info.version || "unknown",
     description: info.description || ""
   };
@@ -22783,16 +22861,33 @@ server.registerTool("yarn_resolve_package", {
     structuredContent: result
   };
 });
-var readTextFileHandler = async (args2) => {
-  const validPath = await validatePath(args2.path);
-  if (args2.head && args2.tail) {
-    throw new Error("Cannot specify both head and tail parameters simultaneously");
+server.registerTool("yarn_read_file", {
+  title: "Read File (Yarn PnP)",
+  description: "Read a file from a Yarn PnP virtual path (inside .yarn/cache zip archives or __virtual__ directories). Use this for paths returned by yarn_resolve_package. For normal filesystem files, use your built-in file reading tools instead. Supports 'head' and 'tail' parameters to read partial files, or 'startLine'/'endLine' to read a specific line range (1-based, inclusive).",
+  inputSchema: {
+    path: external_exports.string().describe("Absolute path to the file (typically from yarn_resolve_package output)"),
+    tail: external_exports.number().optional().describe("If provided, returns only the last N lines of the file"),
+    head: external_exports.number().optional().describe("If provided, returns only the first N lines of the file"),
+    startLine: external_exports.number().optional().describe("If provided with endLine, returns lines from startLine to endLine (1-based, inclusive)"),
+    endLine: external_exports.number().optional().describe("If provided with startLine, returns lines from startLine to endLine (1-based, inclusive)")
+  },
+  outputSchema: { content: external_exports.string() },
+  annotations: { readOnlyHint: true }
+}, async (args) => {
+  const validPath = await validatePath(args.path);
+  const modes = [args.head, args.tail, args.startLine || args.endLine].filter(Boolean);
+  if (modes.length > 1) {
+    throw new Error("Cannot combine head, tail, and startLine/endLine parameters");
   }
   let content;
-  if (args2.tail) {
-    content = await tailFile(validPath, args2.tail);
-  } else if (args2.head) {
-    content = await headFile(validPath, args2.head);
+  if (args.startLine != null && args.endLine != null) {
+    content = await readFileLines(validPath, args.startLine, args.endLine);
+  } else if (args.startLine != null || args.endLine != null) {
+    throw new Error("Both startLine and endLine must be provided together");
+  } else if (args.tail) {
+    content = await tailFile(validPath, args.tail);
+  } else if (args.head) {
+    content = await headFile(validPath, args.head);
   } else {
     content = await readFileContent(validPath);
   }
@@ -22800,18 +22895,7 @@ var readTextFileHandler = async (args2) => {
     content: [{ type: "text", text: content }],
     structuredContent: { content }
   };
-};
-server.registerTool("yarn_read_file", {
-  title: "Read File (Yarn PnP)",
-  description: "Read a file from a Yarn PnP virtual path (inside .yarn/cache zip archives or __virtual__ directories). Use this for paths returned by yarn_resolve_package. For normal filesystem files, use your built-in file reading tools instead. Supports 'head' and 'tail' parameters to read partial files.",
-  inputSchema: {
-    path: external_exports.string().describe("Absolute path to the file (typically from yarn_resolve_package output)"),
-    tail: external_exports.number().optional().describe("If provided, returns only the last N lines of the file"),
-    head: external_exports.number().optional().describe("If provided, returns only the first N lines of the file")
-  },
-  outputSchema: { content: external_exports.string() },
-  annotations: { readOnlyHint: true }
-}, readTextFileHandler);
+});
 server.registerTool("yarn_read_multiple_files", {
   title: "Read Multiple Files (Yarn PnP)",
   description: "Read multiple files from Yarn PnP virtual paths simultaneously. More efficient than reading files one by one. Use for paths from yarn_resolve_package.",
@@ -22820,8 +22904,8 @@ server.registerTool("yarn_read_multiple_files", {
   },
   outputSchema: { content: external_exports.string() },
   annotations: { readOnlyHint: true }
-}, async (args2) => {
-  const results = await Promise.all(args2.paths.map(async (filePath) => {
+}, async (args) => {
+  const results = await Promise.all(args.paths.map(async (filePath) => {
     try {
       const validPath = await validatePath(filePath);
       const content = await readFileContent(validPath);
@@ -22847,9 +22931,9 @@ server.registerTool("yarn_list_directory", {
   },
   outputSchema: { content: external_exports.string() },
   annotations: { readOnlyHint: true }
-}, async (args2) => {
-  const validPath = await validatePath(args2.path);
-  const entries = await fs3.readdir(validPath, { withFileTypes: true });
+}, async (args) => {
+  const validPath = await validatePath(args.path);
+  const entries = await fs11.readdir(validPath, { withFileTypes: true });
   const formatted = entries.map((entry) => `${entry.isDirectory() ? "[DIR]" : "[FILE]"} ${entry.name}`).join("\n");
   return {
     content: [{ type: "text", text: formatted }],
@@ -22865,35 +22949,8 @@ server.registerTool("yarn_directory_tree", {
   },
   outputSchema: { content: external_exports.string() },
   annotations: { readOnlyHint: true }
-}, async (args2) => {
-  const rootPath = args2.path;
-  async function buildTree(currentPath, excludePatterns = []) {
-    const validPath = await validatePath(currentPath);
-    const entries = await fs3.readdir(validPath, { withFileTypes: true });
-    const result = [];
-    for (const entry of entries) {
-      const relativePath = path6.relative(rootPath, path6.join(currentPath, entry.name));
-      const shouldExclude = excludePatterns.some((pattern) => {
-        if (pattern.includes("*")) {
-          return minimatch(relativePath, pattern, { dot: true });
-        }
-        return minimatch(relativePath, pattern, { dot: true }) || minimatch(relativePath, `**/${pattern}`, { dot: true }) || minimatch(relativePath, `**/${pattern}/**`, { dot: true });
-      });
-      if (shouldExclude)
-        continue;
-      const entryData = {
-        name: entry.name,
-        type: entry.isDirectory() ? "directory" : "file"
-      };
-      if (entry.isDirectory()) {
-        const subPath = path6.join(currentPath, entry.name);
-        entryData.children = await buildTree(subPath, excludePatterns);
-      }
-      result.push(entryData);
-    }
-    return result;
-  }
-  const treeData = await buildTree(rootPath, args2.excludePatterns);
+}, async (args) => {
+  const treeData = await buildTree(args.path, args.path, args.excludePatterns);
   const text = JSON.stringify(treeData, null, 2);
   return {
     content: [{ type: "text", text }],
@@ -22910,9 +22967,9 @@ server.registerTool("yarn_search_files", {
   },
   outputSchema: { content: external_exports.string() },
   annotations: { readOnlyHint: true }
-}, async (args2) => {
-  const validPath = await validatePath(args2.path);
-  const results = await searchFilesWithValidation(validPath, args2.pattern, allowedDirectories2, { excludePatterns: args2.excludePatterns });
+}, async (args) => {
+  const validPath = await validatePath(args.path);
+  const results = await searchFilesWithValidation(validPath, args.pattern, allowedDirectories2, { excludePatterns: args.excludePatterns });
   const text = results.length > 0 ? results.join("\n") : "No matches found";
   return {
     content: [{ type: "text", text }],
@@ -22927,8 +22984,8 @@ server.registerTool("yarn_get_file_info", {
   },
   outputSchema: { content: external_exports.string() },
   annotations: { readOnlyHint: true }
-}, async (args2) => {
-  const validPath = await validatePath(args2.path);
+}, async (args) => {
+  const validPath = await validatePath(args.path);
   const info = await getFileStats(validPath);
   const text = Object.entries(info).map(([key, value]) => `${key}: ${value}`).join("\n");
   return {
@@ -22936,16 +22993,6 @@ server.registerTool("yarn_get_file_info", {
     structuredContent: { content: text }
   };
 });
-async function updateAllowedDirectoriesFromRoots(requestedRoots) {
-  const validatedRootDirs = await getValidRootDirectories(requestedRoots);
-  if (validatedRootDirs.length > 0) {
-    allowedDirectories2 = [...validatedRootDirs];
-    setAllowedDirectories(allowedDirectories2);
-    console.error(`Updated allowed directories from MCP roots: ${validatedRootDirs.length} valid directories`);
-  } else {
-    console.error("No valid root directories provided by client");
-  }
-}
 server.server.setNotificationHandler(RootsListChangedNotificationSchema, async () => {
   try {
     const response = await server.server.listRoots();
@@ -22963,29 +23010,12 @@ server.server.oninitialized = async () => {
       const response = await server.server.listRoots();
       if (response && "roots" in response) {
         await updateAllowedDirectoriesFromRoots(response.roots);
-      } else {
-        console.error("Client returned no roots set, keeping current settings");
       }
     } catch (error2) {
       console.error("Failed to request initial roots from client:", error2 instanceof Error ? error2.message : String(error2));
     }
-  } else {
-    if (allowedDirectories2.length > 0) {
-      console.error("Client does not support MCP Roots, using allowed directories set from server args:", allowedDirectories2);
-    } else {
-      throw new Error(`Server cannot operate: No allowed directories available. Please start with directory arguments or use a client that supports MCP roots.`);
-    }
   }
 };
-async function runServer() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("yarn-virtuals-mcp server running on stdio");
-  if (allowedDirectories2.length === 0) {
-    console.error("Started without allowed directories - waiting for client to provide roots via MCP protocol");
-  }
-}
-runServer().catch((error2) => {
-  console.error("Fatal error running server:", error2);
-  process.exit(1);
-});
+var transport = new StdioServerTransport();
+await server.connect(transport);
+console.error("yarn-virtuals-mcp server running on stdio");

@@ -16,26 +16,17 @@ Yarn Berry (v2+) with Plug'n'Play stores packages in zip archives under `.yarn/c
 | `yarn_search_files` | Search for files matching a glob pattern |
 | `yarn_get_file_info` | Get file metadata (size, timestamps) |
 
-All tools are **read-only** and restricted to the allowed directories passed at startup.
+All tools are **read-only** and restricted to the auto-discovered Yarn workspace root.
 
 ## Installation
 
-### Option 1: npx (no install needed)
-
-The server auto-detects and loads `.pnp.cjs` from the working directory, so `npx` works:
+No install needed. Run directly using `yarn dlx`:
 
 ```bash
-npx yarn-virtuals-mcp .
+yarn dlx @dobesv/yarn-virtuals-mcp
 ```
 
-### Option 2: Clone and build
-
-```bash
-git clone https://github.com/dobesv/yarn-virtuals-mcp.git
-cd yarn-virtuals-mcp
-npm install
-npm run build
-```
+The server automatically finds `.pnp.cjs` by searching upward from the current directory and uses the Yarn workspace root as the allowed directory.
 
 ## Setup
 
@@ -44,7 +35,7 @@ npm run build
 Add as a user-level MCP server:
 
 ```bash
-claude mcp add --transport stdio --scope user yarn-virtuals-mcp -- npx yarn-virtuals-mcp .
+claude mcp add --transport stdio --scope user yarn-virtuals-mcp -- yarn dlx @dobesv/yarn-virtuals-mcp
 ```
 
 Or add to your project's `.mcp.json`:
@@ -53,8 +44,8 @@ Or add to your project's `.mcp.json`:
 {
   "mcpServers": {
     "yarn-virtuals-mcp": {
-      "command": "npx",
-      "args": ["yarn-virtuals-mcp", "."]
+      "command": "yarn",
+      "args": ["dlx", "@dobesv/yarn-virtuals-mcp"]
     }
   }
 }
@@ -68,8 +59,8 @@ Add to your `~/.gemini/settings.json`:
 {
   "mcpServers": {
     "yarn-virtuals-mcp": {
-      "command": "npx",
-      "args": ["yarn-virtuals-mcp", "."]
+      "command": "yarn",
+      "args": ["dlx", "@dobesv/yarn-virtuals-mcp"]
     }
   }
 }
@@ -77,10 +68,10 @@ Add to your `~/.gemini/settings.json`:
 
 ### Generic MCP Client
 
-Run the server on stdio, passing allowed directories as arguments:
+Run the server on stdio from within any Yarn PnP project:
 
 ```bash
-npx yarn-virtuals-mcp /path/to/your/yarn/project
+yarn dlx @dobesv/yarn-virtuals-mcp
 ```
 
 ## Usage
@@ -105,22 +96,19 @@ The typical workflow is:
 Yarn PnP replaces `node_modules` with zip archives in `.yarn/cache/` and a runtime patch (`.pnp.cjs`) that intercepts `require`/`import` calls. Paths through `.yarn/__virtual__/` don't exist on the real filesystem - they're resolved by Yarn's patched `fs` module.
 
 This server:
-1. Loads `.pnp.cjs` automatically if not already in a Yarn PnP environment
-2. Uses `createRequire()` to resolve packages through Yarn's module resolution
-3. Provides MCP filesystem tools that work with the PnP-patched `fs`
+1. Auto-discovers the Yarn workspace root by searching upward for `.pnp.cjs`
+2. Loads `.pnp.cjs` automatically if not already in a Yarn PnP environment
+3. Uses `createRequire()` to resolve packages through Yarn's module resolution
+4. Provides MCP filesystem tools that work with the PnP-patched `fs`
 
 ## Auto-Allow in Claude Code
 
-Since all tools are read-only, you can auto-allow them in `~/.claude/settings.local.json`:
+Since all tools are read-only, you can auto-allow them so Claude never prompts for permission:
 
-```json
-{
-  "permissions": {
-    "allow": [
-      "mcp__yarn-virtuals-mcp__*"
-    ]
-  }
-}
+```bash
+cp ~/.claude/settings.json ~/.claude/settings.json.bak
+jq '.permissions.allow = ((.permissions.allow // []) + ["mcp__yarn-virtuals-mcp__*"] | unique)' \
+  ~/.claude/settings.json.bak > ~/.claude/settings.json
 ```
 
 ## License

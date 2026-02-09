@@ -1,6 +1,6 @@
-import path from 'path';
+import path from "path";
 
-export function isPathWithinAllowedDirectories(absolutePath, allowedDirectories) {
+export default function isPathWithinAllowedDirectories(absolutePath, allowedDirectories) {
     if (typeof absolutePath !== 'string' || !Array.isArray(allowedDirectories)) {
         return false;
     }
