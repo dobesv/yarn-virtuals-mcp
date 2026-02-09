@@ -1,5 +1,5 @@
 {
-  "name": "yarn-virtuals-mcp",
+  "name": "@dobesv/yarn-virtuals-mcp",
   "version": "1.0.0",
   "description": "MCP server for browsing Yarn PnP virtual filesystem and package source code",
   "type": "module",
