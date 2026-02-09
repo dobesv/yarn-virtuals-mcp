@@ -20,10 +20,10 @@ All tools are **read-only** and restricted to the auto-discovered Yarn workspace
 
 ## Installation
 
-No install needed. Run directly using `yarn dlx`:
+No install needed. Run directly from GitHub using `npx`:
 
 ```bash
-yarn dlx @dobesv/yarn-virtuals-mcp
+npx github:dobesv/yarn-virtuals-mcp
 ```
 
 The server automatically finds `.pnp.cjs` by searching upward from the current directory and uses the Yarn workspace root as the allowed directory.
@@ -35,7 +35,7 @@ The server automatically finds `.pnp.cjs` by searching upward from the current d
 Add as a user-level MCP server:
 
 ```bash
-claude mcp add --transport stdio --scope user yarn-virtuals-mcp -- yarn dlx @dobesv/yarn-virtuals-mcp
+claude mcp add --transport stdio --scope user yarn-virtuals-mcp -- npx github:dobesv/yarn-virtuals-mcp
 ```
 
 Or add to your project's `.mcp.json`:
@@ -44,8 +44,8 @@ Or add to your project's `.mcp.json`:
 {
   "mcpServers": {
     "yarn-virtuals-mcp": {
-      "command": "yarn",
-      "args": ["dlx", "@dobesv/yarn-virtuals-mcp"]
+      "command": "npx",
+      "args": ["github:dobesv/yarn-virtuals-mcp"]
     }
   }
 }
@@ -53,17 +53,8 @@ Or add to your project's `.mcp.json`:
 
 ### Gemini CLI
 
-Add to your `~/.gemini/settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "yarn-virtuals-mcp": {
-      "command": "yarn",
-      "args": ["dlx", "@dobesv/yarn-virtuals-mcp"]
-    }
-  }
-}
+```bash
+gemini mcp add yarn-virtuals-mcp -- npx github:dobesv/yarn-virtuals-mcp
 ```
 
 ### Generic MCP Client
@@ -71,7 +62,7 @@ Add to your `~/.gemini/settings.json`:
 Run the server on stdio from within any Yarn PnP project:
 
 ```bash
-yarn dlx @dobesv/yarn-virtuals-mcp
+npx github:dobesv/yarn-virtuals-mcp
 ```
 
 ## Usage
@@ -100,6 +91,26 @@ This server:
 2. Loads `.pnp.cjs` automatically if not already in a Yarn PnP environment
 3. Uses `createRequire()` to resolve packages through Yarn's module resolution
 4. Provides MCP filesystem tools that work with the PnP-patched `fs`
+
+## Skill (Optional)
+
+This repo includes a [SKILL.md](./SKILL.md) that teaches the AI assistant the workflow for browsing Yarn PnP package source. Installing the skill helps the AI automatically use the right tools when you ask it to look at a dependency's source code.
+
+### Install skill for Claude Code
+
+```bash
+mkdir -p ~/.claude/skills/yarn-virtuals-helper
+curl -fsSL https://raw.githubusercontent.com/dobesv/yarn-virtuals-mcp/master/SKILL.md \
+  -o ~/.claude/skills/yarn-virtuals-helper/SKILL.md
+```
+
+### Install skill for Gemini CLI
+
+```bash
+mkdir -p ~/.gemini/skills/yarn-virtuals-helper
+curl -fsSL https://raw.githubusercontent.com/dobesv/yarn-virtuals-mcp/master/SKILL.md \
+  -o ~/.gemini/skills/yarn-virtuals-helper/SKILL.md
+```
 
 ## Auto-Allow in Claude Code
 
