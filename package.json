@@ -1,0 +1,39 @@
+{
+  "name": "yarn-virtuals-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for browsing Yarn PnP virtual filesystem and package source code",
+  "type": "module",
+  "bin": {
+    "yarn-virtuals-mcp": "dist/server.mjs"
+  },
+  "files": [
+    "dist/server.mjs"
+  ],
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --platform=node --format=esm --outfile=dist/server.mjs --external:fs --external:path --external:module --external:child_process --external:readline --external:crypto --external:os --external:node:process",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "yarn",
+    "pnp",
+    "plug-n-play",
+    "virtual-filesystem",
+    "model-context-protocol",
+    "claude",
+    "ai"
+  ],
+  "author": "Dobes Vandermeer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dobesv/yarn-virtuals-mcp.git"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "diff": "^7.0.0",
+    "esbuild": "^0.27.3",
+    "minimatch": "^10.0.1",
+    "zod": "^3.24.4"
+  }
+}
