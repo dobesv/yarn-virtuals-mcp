@@ -16,7 +16,8 @@ export default async function searchFilesWithValidation(rootPath, pattern, allow
                 const shouldExclude = excludePatterns.some(excludePattern => minimatch(relativePath, excludePattern, { dot: true }));
                 if (shouldExclude) continue;
                 if (minimatch(relativePath, pattern, { dot: true })) {
-                    results.push(fullPath);
+                    const stats = await fs.stat(fullPath);
+                    results.push({ path: fullPath, size: stats.size });
                 }
                 if (entry.isDirectory()) {
                     await search(fullPath);

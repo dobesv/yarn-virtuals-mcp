@@ -22589,7 +22589,8 @@ async function searchFilesWithValidation(rootPath, pattern, allowedDirectories3,
         const shouldExclude = excludePatterns.some((excludePattern) => minimatch(relativePath, excludePattern, { dot: true }));
         if (shouldExclude) continue;
         if (minimatch(relativePath, pattern, { dot: true })) {
-          results.push(fullPath);
+          const stats = await fs5.stat(fullPath);
+          results.push({ path: fullPath, size: stats.size });
         }
         if (entry.isDirectory()) {
           await search(fullPath);
@@ -22863,33 +22864,71 @@ server.registerTool("yarn_resolve_package", {
 });
 server.registerTool("yarn_read_file", {
   title: "Read File (Yarn PnP)",
-  description: "Read a file from a Yarn PnP virtual path (inside .yarn/cache zip archives or __virtual__ directories). Use this for paths returned by yarn_resolve_package. For normal filesystem files, use your built-in file reading tools instead. Supports 'head' and 'tail' parameters to read partial files, or 'startLine'/'endLine' to read a specific line range (1-based, inclusive).",
+  description: "Read a file from a Yarn PnP virtual path (inside .yarn/cache zip archives or __virtual__ directories). Use this for paths returned by yarn_resolve_package. For normal filesystem files, use your built-in file reading tools instead. Supports 'head' and 'tail' parameters to read partial files, 'startLine'/'endLine' to read a specific line range (1-based, inclusive), and 'grep' to filter lines matching a regex pattern. Use 'lineNumbers' to prefix each output line with its line number.",
   inputSchema: {
     path: external_exports.string().describe("Absolute path to the file (typically from yarn_resolve_package output)"),
     tail: external_exports.number().optional().describe("If provided, returns only the last N lines of the file"),
     head: external_exports.number().optional().describe("If provided, returns only the first N lines of the file"),
     startLine: external_exports.number().optional().describe("If provided with endLine, returns lines from startLine to endLine (1-based, inclusive)"),
-    endLine: external_exports.number().optional().describe("If provided with startLine, returns lines from startLine to endLine (1-based, inclusive)")
+    endLine: external_exports.number().optional().describe("If provided with startLine, returns lines from startLine to endLine (1-based, inclusive)"),
+    grep: external_exports.string().optional().describe("If provided, only return lines matching this regex pattern"),
+    context: external_exports.number().optional().describe("Number of context lines to include before and after each grep match (default: 0)"),
+    lineNumbers: external_exports.boolean().optional().describe("If true, prefix each line with its 1-based line number")
   },
   outputSchema: { content: external_exports.string() },
   annotations: { readOnlyHint: true }
 }, async (args) => {
   const validPath = await validatePath(args.path);
+  const rangeMode = args.head || args.tail || args.startLine != null || args.endLine != null;
+  if (rangeMode && args.grep) {
+    throw new Error("Cannot combine grep with head, tail, or startLine/endLine");
+  }
   const modes = [args.head, args.tail, args.startLine || args.endLine].filter(Boolean);
   if (modes.length > 1) {
     throw new Error("Cannot combine head, tail, and startLine/endLine parameters");
   }
   let content;
+  let startLineNum = 1;
   if (args.startLine != null && args.endLine != null) {
     content = await readFileLines(validPath, args.startLine, args.endLine);
+    startLineNum = Math.max(1, args.startLine);
   } else if (args.startLine != null || args.endLine != null) {
     throw new Error("Both startLine and endLine must be provided together");
   } else if (args.tail) {
     content = await tailFile(validPath, args.tail);
+    const totalLines = (await readFileContent(validPath)).split("\n").length;
+    startLineNum = Math.max(1, totalLines - args.tail + 1);
   } else if (args.head) {
     content = await headFile(validPath, args.head);
   } else {
     content = await readFileContent(validPath);
+  }
+  if (args.grep) {
+    const regex = new RegExp(args.grep);
+    const contextLines = args.context || 0;
+    const allLines = content.split("\n");
+    const matchIndices = /* @__PURE__ */ new Set();
+    for (let i = 0; i < allLines.length; i++) {
+      if (regex.test(allLines[i])) {
+        for (let j = Math.max(0, i - contextLines); j <= Math.min(allLines.length - 1, i + contextLines); j++) {
+          matchIndices.add(j);
+        }
+      }
+    }
+    const sortedIndices = [...matchIndices].sort((a, b) => a - b);
+    const outputLines = [];
+    let prevIdx = -2;
+    for (const idx of sortedIndices) {
+      if (prevIdx >= 0 && idx > prevIdx + 1) {
+        outputLines.push("---");
+      }
+      const lineNum = startLineNum + idx;
+      outputLines.push(args.lineNumbers ? `${lineNum}	${allLines[idx]}` : allLines[idx]);
+      prevIdx = idx;
+    }
+    content = outputLines.join("\n");
+  } else if (args.lineNumbers) {
+    content = content.split("\n").map((line, i) => `${startLineNum + i}	${line}`).join("\n");
   }
   return {
     content: [{ type: "text", text: content }],
@@ -22959,7 +22998,7 @@ server.registerTool("yarn_directory_tree", {
 });
 server.registerTool("yarn_search_files", {
   title: "Search Files (Yarn PnP)",
-  description: "Recursively search for files matching a glob pattern within a Yarn PnP virtual path. Returns full paths to matching items. Use for paths from yarn_resolve_package.",
+  description: "Recursively search for files matching a glob pattern within a Yarn PnP virtual path. Returns full paths to matching items with file sizes. Use for paths from yarn_resolve_package.",
   inputSchema: {
     path: external_exports.string().describe("Absolute path to search within (typically from yarn_resolve_package output)"),
     pattern: external_exports.string().describe("Glob pattern, e.g. '**/*.d.ts' or '**/*.js'"),
@@ -22970,7 +23009,7 @@ server.registerTool("yarn_search_files", {
 }, async (args) => {
   const validPath = await validatePath(args.path);
   const results = await searchFilesWithValidation(validPath, args.pattern, allowedDirectories2, { excludePatterns: args.excludePatterns });
-  const text = results.length > 0 ? results.join("\n") : "No matches found";
+  const text = results.length > 0 ? results.map((r) => `${r.path} (${r.size} bytes)`).join("\n") : "No matches found";
   return {
     content: [{ type: "text", text }],
     structuredContent: { content: text }
